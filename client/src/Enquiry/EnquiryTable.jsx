@@ -1,101 +1,73 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
-export default function EnquiryTable({ data, refreshData }) {
-  // Handle Delete action
+const EnquiryTable = ({ data, refreshData, handleEdit }) => {
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Handle delete enquiry
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this enquiry?")) {
-      axios.delete(`http://localhost:8000/api/enquiries/delete/${id}`)
-        .then((res) => {
-          alert("Enquiry deleted successfully!");
-          refreshData(); // Refresh the table after deletion
+    axios.delete(`http://localhost:8000/api/enquiries/delete/${id}`)
+        .then(() => {
+            refreshData();  // Refresh data after delete
+            setSuccessMessage('Enquiry deleted successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);  // Clear success message after 3 seconds
         })
-        .catch((error) => {
-          console.error('Error deleting enquiry:', error);
-          alert("Error deleting enquiry.");
-        });
-    }
+        .catch((error) => console.error('Error deleting enquiry:', error));
   };
-
-  // Handle Update action
-  const handleUpdate = (item) => {
-    // Ask for updated values
-    const updatedName = prompt("Enter new name:", item.name);
-    const updatedEmail = prompt("Enter new email:", item.email);
-    const updatedSubject = prompt("Enter new subject:", item.subject);
-    const updatedMessage = prompt("Enter new message:", item.message);
-
-    // If user cancels any prompt, return
-    if (!updatedName || !updatedEmail || !updatedSubject || !updatedMessage) return;
-
-    // Send update request
-    axios.put(`http://localhost:8000/api/enquiries/update/${item._id}`, {
-      name: updatedName,
-      email: updatedEmail,
-      subject: updatedSubject,
-      message: updatedMessage
-    })
-    .then((res) => {
-      alert("Enquiry updated successfully!");
-      refreshData(); // Refresh the table after updating
-    })
-    .catch((error) => {
-      console.error('Error updating enquiry:', error);
-      alert("Error updating enquiry.");
-    });
-  };
-
-  // Debugging: Log received data
-  useEffect(() => {
-    console.log('Data received in EnquiryTable:', data);
-  }, [data]);
 
   return (
-    <div className='p-6 bg-gray-100'>
-      <h2 className='text-2xl font-bold mb-4'>Enquiries Table</h2>
-      <table className='w-full border-collapse border border-gray-300'>
+    <div className="container mx-auto p-4">
+      <h2 className="text-2xl font-semibold text-center mb-4">Enquiries with Contact Data</h2>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-500 text-white p-3 mb-4 rounded">
+          {successMessage}
+        </div>
+      )}
+      
+      {/* Enquiry Table */}
+      <table className="min-w-full table-auto border-collapse">
         <thead>
-          <tr className='bg-gray-200'>
-            <th className='border border-gray-300 p-2'>Name</th>
-            <th className='border border-gray-300 p-2'>Email</th>
-            <th className='border border-gray-300 p-2'>Subject</th>
-            <th className='border border-gray-300 p-2'>Message</th>
-            <th className='border border-gray-300 p-2'>Actions</th>
+          <tr className="bg-gray-200">
+            <th className="px-4 py-2 text-left">Name</th>
+            <th className="px-4 py-2 text-left">Email</th>
+            <th className="px-4 py-2 text-left">Subject</th>
+            <th className="px-4 py-2 text-left">Message</th>
+            <th className="px-4 py-2 text-left">Phone</th>
+            <th className="px-4 py-2 text-left">Address</th>
+            <th className="px-4 py-2 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {data.length > 0 ? (
-            data.map((item) => (
-              <tr key={item._id}>
-                <td className='border border-gray-300 p-2'>{item.name}</td>
-                <td className='border border-gray-300 p-2'>{item.email}</td>
-                <td className='border border-gray-300 p-2'>{item.subject}</td>
-                <td className='border border-gray-300 p-2'>{item.message}</td>
-                <td className='border border-gray-300 p-2'>
-                  <button 
-                    className='bg-yellow-500 text-white px-2 py-1 rounded mr-2' 
-                    onClick={() => handleUpdate(item)}
-                  >
-                    Update
-                  </button>
-                  <button 
-                    className='bg-red-500 text-white px-2 py-1 rounded' 
-                    onClick={() => handleDelete(item._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan='5' className='border border-gray-300 p-2 text-center'>
-                No enquiries found.
+          {data.map((enquiry) => (
+            <tr key={enquiry._id} className="border-t">
+              <td className="px-4 py-2">{enquiry.name}</td>
+              <td className="px-4 py-2">{enquiry.email}</td>
+              <td className="px-4 py-2">{enquiry.subject}</td>
+              <td className="px-4 py-2">{enquiry.message}</td>
+              <td className="px-4 py-2">{enquiry.contact ? enquiry.contact.phone : 'N/A'}</td>
+              <td className="px-4 py-2">{enquiry.contact ? enquiry.contact.address : 'N/A'}</td>
+              <td className="px-4 py-2">
+                <button 
+                  onClick={() => handleEdit(enquiry)} 
+                  className="bg-yellow-500 text-white p-2 rounded mr-2"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={() => handleDelete(enquiry._id)} 
+                  className="bg-red-500 text-white p-2 rounded"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
-          )}
+          ))}
         </tbody>
       </table>
     </div>
   );
-}
+};
+
+export default EnquiryTable;
